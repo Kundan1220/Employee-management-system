@@ -1,8 +1,27 @@
+import 'dotenv/config';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 
-const API_URL = 'http://127.0.0.1:8000';
+const API_URL = import.meta.env.VITE_BACKEND_API_URL || 8000;
+
+
+
+export async function addEmployee(employee) {
+  const response = await fetch(`${API_URL}/employees/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(employee),
+  });
+
+  if (!response.ok) {
+    throw new Error("Error Adding Employee");
+  }
+
+  return response.json();
+}
 
 function App() {
   const [employees, setEmployees] = useState([]);
