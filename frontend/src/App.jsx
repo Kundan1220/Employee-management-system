@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 
-const API_URL = import.meta.env.VITE_BACKEND_API_URL || 8000;
+const API_URL = import.meta.env.VITE_BACKEND_API_URL;
 
 
 
@@ -19,7 +19,16 @@ export async function addEmployee(employee) {
   if (!response.ok) {
     throw new Error("Error Adding Employee");
   }
+  
 
+  return response.json();
+}
+
+export async function fetchEmployees() {
+  const response = await fetch(`${API_URL}/employees/`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch employees");
+  }
   return response.json();
 }
 
