@@ -33,57 +33,15 @@ def create_employee(employee: schemas.EmployeeCreate, db: Session = Depends(get_
     if existing_employee:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    new_employee = models.Employee(**employee.model_dump())
+    new_employee = models.Employee(
+        name=employee.name,
+        email=employee.email.lower(),
+        department=employee.department,
+        position=employee.position,
+        salary=employee.salary,
+        phone=employee.phone,
+    )
     db.add(new_employee)
     db.commit()
     db.refresh(new_employee)
     return new_employee
-
-@app.get("/employees/", response_model=list[schemas.EmployeeResponse])
-def get_employees(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    employees = db.query(models.Employee).offset(skip).limit(limit).all()
-    return employees
-
-@app.get("/employees/{employee_id}", response_model=schemas.EmployeeResponse)
-def get_employee(employee_id: int, db: Session = Depends(get_db)):
-    employee = db.query(models.Employee).filter(models.Employee.id == employee_id).first()
-    if not employee:
-        raise HTTPException(status_code=404, detail="Employee not found")
-    return employee
-
-@app.put("/employees/{employee_id}", response_model=schemas.EmployeeResponse)
-def update_employee(
-    employee_id: int,
-    employee_update: schemas.EmployeeUpdate,
-    db: Session = Depends(get_db),
-):
-    employee = db.query(models.Employee).filter(models.Employee.id == employee_id).first()
-    if not employee:
-        raise HTTPException(status_code=404, detail="Employee not found")
-
-    if employee_update.email:
-        email_value = employee_update.email.lower()
-        duplicate = (
-            db.query(models.Employee)
-            .filter(models.Employee.email == email_value, models.Employee.id != employee_id)
-            .first()
-        )
-        if duplicate:
-            raise HTTPException(status_code=400, detail="Email already registered")
-
-    for key, value in employee_update.model_dump(exclude_unset=True).items():
-        setattr(employee, key, value)
-
-    db.commit()
-    db.refresh(employee)
-    return employee
-
-@app.delete("/employees/{employee_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_employee(employee_id: int, db: Session = Depends(get_db)):
-    employee = db.query(models.Employee).filter(models.Employee.id == employee_id).first()
-    if not employee:
-        raise HTTPException(status_code=404, detail="Employee not found")
-
-    db.delete(employee)
-    db.commit()
-    return None
