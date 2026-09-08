@@ -1,5 +1,6 @@
-src/.env
+
 .env
+frontend/.env
 # Logs
 logs
 *.log
