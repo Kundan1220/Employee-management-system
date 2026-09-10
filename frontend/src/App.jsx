@@ -55,8 +55,15 @@ function App() {
       const response = await axios.get(`${API_URL}/employees/`);
       setEmployees(response.data);
     } catch (error) {
-      toast.error('Failed to load employee list.');
-    }
+  console.error("Employee load error:", error.response?.data || error);
+
+  const detail =
+    error.response?.data?.detail ||
+    error.message ||
+    "Error saving employee.";
+
+  toast.error(String(detail));
+}
   };
 
 const handleSubmit = async (e) => {
