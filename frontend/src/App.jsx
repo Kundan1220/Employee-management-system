@@ -1,4 +1,4 @@
-import 'dotenv/config';
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
@@ -59,33 +59,49 @@ function App() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const employeeData = { name, email, department, designation, salary: parseFloat(salary) };
-      
-      if (editingId) {
-        await axios.put(`${API_URL}/employees/${editingId}`, employeeData);
-        toast.success('Employee updated successfully!');
-        setEditingId(null);
-      } else {
-        await axios.post(`${API_URL}/employees/`, employeeData);
-        toast.success('Employee added successfully!');
-      }
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-      setName(''); setEmail(''); setDepartment(''); setDesignation(''); setSalary('');
-      fetchEmployees();
-    } catch (error) {
-      toast.error('Error saving employee.');
-    }
+  const employeeData = {
+    name,
+    email,
+    department,
+    position: designation,
+    salary: Number(salary),
+    phone: null,
   };
+
+  try {
+    if (editingId) {
+      await axios.put(`${API_URL}/employees/${editingId}`, employeeData);
+      toast.success('Employee updated successfully!');
+      setEditingId(null);
+    } else {
+      await axios.post(`${API_URL}/employees/`, employeeData);
+      toast.success('Employee added successfully!');
+    }
+
+    setName('');
+    setEmail('');
+    setDepartment('');
+    setDesignation('');
+    setSalary('');
+
+    fetchEmployees();
+  } catch (error) {
+    console.error('Backend error:', error.response?.data || error.message);
+    toast.error(
+      error.response?.data?.detail || 'Error saving employee.'
+    );
+  }
+};
 
   const handleEditClick = (emp) => {
     setEditingId(emp.id);
     setName(emp.name);
     setEmail(emp.email);
     setDepartment(emp.department);
-    setDesignation(emp.designation);
+    setDesignation(emp.position || emp.designation || '');
     setSalary(emp.salary);
     toast('Editing employee...', { icon: '✏️' });
   };
@@ -103,8 +119,12 @@ function App() {
 
   const exportToCSV = () => {
     if (employees.length === 0) { toast.error('No data!'); return; }
-    const headers = ['ID,Name,Email,Department,Designation,Salary\n'];
-    const rows = employees.map(emp => `${emp.id},"${emp.name}","${emp.email}","${emp.department}","${emp.designation}",${emp.salary}`);
+    const headers = ['ID,Name,Email,Department,Position,Salary\n'];
+
+const rows = employees.map(
+  (emp) =>
+    `${emp.id},"${emp.name}","${emp.email}","${emp.department}","${emp.position || emp.designation || ''}",${emp.salary}`
+);
     const csvContent = 'data:text/csv;charset=utf-8,' + headers.concat(rows).join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
@@ -138,7 +158,10 @@ function App() {
   });
 
   const totalEmployees = employees.length;
-  const totalPayroll = employees.reduce((acc, curr) => acc + curr.salary, 0);
+  const totalPayroll = employees.reduce(
+  (acc, curr) => acc + (Number(curr.salary) || 0),
+  0
+);
   const uniqueDepartments = new Set(employees.map(e => e.department)).size;
 
   return (
@@ -221,8 +244,8 @@ function App() {
                   <td style={{fontWeight: 500}}>{emp.name}</td>
                   <td>{emp.email}</td>
                   <td>{emp.department}</td>
-                  <td>{emp.designation}</td>
-                  <td>${emp.salary.toLocaleString()}</td>
+                  <td>{emp.position || emp.designation}</td>
+                 <td>${Number(emp.salary).toLocaleString()}</td>
                   <td style={{textAlign: 'center'}}>
                     {confirmDeleteId === emp.id ? (
                       <>
